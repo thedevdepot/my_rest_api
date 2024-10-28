@@ -14,18 +14,11 @@ parser.add_argument('title', required=True)
 parser.add_argument('uploadDate', type=int, required=False)
 
 
-videos = {'video1': {'title': 'Star Wars', 'UploadDate': 20210917},
-          'video2': {'title': 'Star Trek', 'UploadDate': 20211017},
-          'video3': {'title': 'Spaceballs', 'UploadDate': 20211117}}
-
-
 def write_changes_to_file():
     global videos
     videos = {k: v for k, v in sorted(videos.items(), key=lambda video: video[1]['uploadDate'])}
     with open('videos.json', 'w') as f:
         json.dump(videos, f)
-
-write_changes_to_file()
 
 
 class Video(Resource):
