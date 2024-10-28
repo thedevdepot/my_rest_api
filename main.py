@@ -1,4 +1,6 @@
 from importlib.metadata import pass_none
+from os import write
+
 from flask import Flask
 from flask_restful import Resource, Api, reqparse, abort
 
@@ -12,6 +14,10 @@ api = Api(app)
 parser = reqparse.RequestParser()
 parser.add_argument('title', required=True)
 parser.add_argument('uploadDate', type=int, required=False)
+
+
+with open('videos.json', 'r') as f:
+    videos = json.load(f)
 
 
 def write_changes_to_file():
@@ -35,12 +41,14 @@ class Video(Resource):
         new_video = {'title': args['title'],
                      'UploadDate': args['UploadDate']}
         videos[video_id] = new_video
+        write_changes_to_file()
         return {video_id: videos[video_id]}, 201
 
     def delete(self, video_id):
         if video_id not in videos:
             abort(404, message=f"Video {video_id} not found!")
         del videos[video_id]
+        write_changes_to_file()
         return "", 204
 
 
@@ -55,6 +63,8 @@ class VideoSchedule(Resource):
         video_id = max(int(v.lstrip('video')) for v in videos.keys()) + 1
         video_id = f"video{video_id}"
         videos[video_id] = new_video
+        write_changes_to_file()
+        print("changes written to file") #Debug
         return videos[video_id], 201
 
 api.add_resource(Video, '/videos/<video_id>/')
