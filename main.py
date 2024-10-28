@@ -1,18 +1,31 @@
 from importlib.metadata import pass_none
-
 from flask import Flask
 from flask_restful import Resource, Api, reqparse, abort
 
+import json
 
-videos = {'video1': {'Name': 'Star Wars', 'Genre': 'Space Opera', 'score': '10/10', 'extra': 'none'},
-          'video2': {'Name': 'Star Trek', 'Genre': 'Documentary', 'score': '42/42'},
-          'video3': {'Name': 'Last Starfigter', 'Genre': 'Educational', 'score': 'Null'}}
-
-parser = reqparse.RequestParser()
-parser.add_argument('title', required=True)
 
 app = Flask("VideoAPI")
 api = Api(app)
+
+
+parser = reqparse.RequestParser()
+parser.add_argument('title', required=True)
+parser.add_argument('uploadDate', type=int, required=False)
+
+
+videos = {'video1': {'title': 'Star Wars', 'UploadDate': 20210917},
+          'video2': {'title': 'Star Trek', 'UploadDate': 20211017},
+          'video3': {'title': 'Spaceballs', 'UploadDate': 20211117}}
+
+
+def write_changes_to_file():
+    global videos
+    videos = {k: v for k, v in sorted(videos.items(), key=lambda video: video[1]['uploadDate'])}
+    with open('videos.json', 'w') as f:
+        json.dump(videos, f)
+
+write_changes_to_file()
 
 
 class Video(Resource):
@@ -26,7 +39,8 @@ class Video(Resource):
 
     def put(self, video_id):
         args = parser.parse_args()
-        new_video = {'title': args['title']}
+        new_video = {'title': args['title'],
+                     'UploadDate': args['UploadDate']}
         videos[video_id] = new_video
         return {video_id: videos[video_id]}, 201
 
@@ -43,7 +57,8 @@ class VideoSchedule(Resource):
         return videos
     def post(self):
         args = parser.parse_args()
-        new_video = {'title': args['title']}
+        new_video = {'title': args['title'],
+                     'UploadDate': args['UploadDate']}
         video_id = max(int(v.lstrip('video')) for v in videos.keys()) + 1
         video_id = f"video{video_id}"
         videos[video_id] = new_video
